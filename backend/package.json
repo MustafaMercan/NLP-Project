@@ -1,0 +1,40 @@
+{
+  "name": "nlp-node-backend",
+  "version": "1.0.0",
+  "description": "Backend for GTU NLP Web Scraping Project",
+  "main": "src/app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "migrate:urls": "node src/scripts/migrateUrlsToEn.js",
+    "migrate:urls:execute": "node src/scripts/migrateUrlsToEn.js --execute"
+  },
+  "keywords": [
+    "nlp",
+    "scraping",
+    "nodejs",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^7.5.0",
+    "axios": "^1.5.0",
+    "cheerio": "^1.0.0-rc.12",
+    "puppeteer": "^21.0.0",
+    "natural": "^6.5.0",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "express-rate-limit": "^6.10.0",
+    "validator": "^13.11.0",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
+
