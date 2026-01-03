@@ -394,29 +394,4 @@ Backend tüm origin'lere izin verir (development için). Production'da `.env` do
    - Dashboard'da istatistikleri görüntüle
    - Veriler sayfasında filtrele ve sırala
 
-## 🐛 Bilinen Sorunlar
-
-- Node.js v18'de Vite uyarıları (çalışmaya engel değil)
-- Bazı dinamik sayfalarda içerik çekme başarısız olabilir
-- Büyük veri setlerinde sınıflandırma uzun sürebilir
-
-## 📄 Lisans
-
-ISC
-
-## 👥 Katkıda Bulunma
-
-1. Fork edin
-2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
-3. Commit edin (`git commit -m 'Add amazing feature'`)
-4. Push edin (`git push origin feature/amazing-feature`)
-5. Pull Request açın
-
-## 📞 İletişim
-
-Sorularınız için issue açabilirsiniz.
-
----
-
-**Not**: Bu proje eğitim amaçlı geliştirilmiştir. Production kullanımı için ek güvenlik önlemleri alınmalıdır.
 
