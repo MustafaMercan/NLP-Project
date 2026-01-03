@@ -33,3 +33,4 @@ data/
 # Puppeteer
 .local-chromium/
 
+# Trained models

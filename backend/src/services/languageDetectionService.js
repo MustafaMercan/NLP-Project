@@ -1,66 +1,45 @@
+import { franc } from 'franc';
 import { log } from '../utils/logger.js';
 
 /**
- * Basit dil tespiti (Türkçe karakterlere göre)
+ * Dil tespiti (franc kütüphanesi kullanarak)
+ * Sadece Türkçe ve İngilizce'yi destekler
  */
 export const detectLanguage = (text) => {
   if (!text || text.length === 0) {
     return 'tr'; // Varsayılan
   }
   
-  // Türkçe karakterler
-  const turkishChars = /[çğıöşüÇĞIİÖŞÜ]/;
-  
-  // Türkçe kelimeler (yaygın)
-  const turkishWords = [
-    've', 'bir', 'bu', 'ile', 'için', 'olan', 'olan', 'gibi', 'kadar',
-    'haber', 'duyuru', 'etkinlik', 'akademik', 'öğrenci', 'üniversite',
-    'araştırma', 'proje', 'fakülte', 'bölüm', 'enstitü', 'rektörlük',
-  ];
-  
-  // İngilizce kelimeler (yaygın)
-  const englishWords = [
-    'the', 'and', 'for', 'with', 'from', 'this', 'that', 'news',
-    'event', 'academic', 'student', 'university', 'research', 'project',
-    'faculty', 'department', 'institute',
-  ];
-  
-  const lowerText = text.toLowerCase();
-  
-  // Türkçe karakter kontrolü
-  const hasTurkishChars = turkishChars.test(text);
-  
-  // Kelime sayımı
-  let turkishWordCount = 0;
-  let englishWordCount = 0;
-  
-  turkishWords.forEach(word => {
-    const regex = new RegExp(`\\b${word}\\b`, 'gi');
-    const matches = lowerText.match(regex);
-    if (matches) turkishWordCount += matches.length;
-  });
-  
-  englishWords.forEach(word => {
-    const regex = new RegExp(`\\b${word}\\b`, 'gi');
-    const matches = lowerText.match(regex);
-    if (matches) englishWordCount += matches.length;
-  });
-  
-  // Karar verme
-  if (hasTurkishChars) {
-    return 'tr';
+  // Çok kısa metinler için basit kontrol
+  if (text.length < 10) {
+    // Türkçe karakter kontrolü
+    const turkishChars = /[çğıöşüÇĞIİÖŞÜ]/;
+    return turkishChars.test(text) ? 'tr' : 'en';
   }
   
-  if (turkishWordCount > englishWordCount * 1.5) {
-    return 'tr';
+  try {
+    // Franc ile dil tespiti (ISO 639-3 kodları döner: 'tur', 'eng', vb.)
+    // Sadece Türkçe ve İngilizce'ye odaklanmak için minLength kullanıyoruz
+    const detectedLang = franc(text, { minLength: 3 });
+    
+    // ISO 639-3 kodlarını bizim kod formatımıza çevir
+    if (detectedLang === 'tur') {
+      return 'tr'; // Türkçe
+    } else if (detectedLang === 'eng') {
+      return 'en'; // İngilizce
+    } else {
+      // Tespit edilemedi veya başka bir dil - varsayılan Türkçe
+      // Ancak Türkçe karakter varsa Türkçe olarak kabul et
+      const turkishChars = /[çğıöşüÇĞIİÖŞÜ]/;
+      return turkishChars.test(text) ? 'tr' : 'en';
+    }
+    
+  } catch (error) {
+    log.warn(`Dil tespiti hatası: ${error.message}, varsayılan olarak Türkçe döndürülüyor`);
+    // Hata durumunda basit kontrol
+    const turkishChars = /[çğıöşüÇĞIİÖŞÜ]/;
+    return turkishChars.test(text) ? 'tr' : 'en';
   }
-  
-  if (englishWordCount > turkishWordCount * 1.5) {
-    return 'en';
-  }
-  
-  // Varsayılan olarak Türkçe
-  return 'tr';
 };
 
 /**

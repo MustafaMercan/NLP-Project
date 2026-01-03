@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import connectDB from './config/database.js';
 import { logger } from './utils/logger.js';
+import { loadTrainedModels } from './services/nlpService.js';
 
 // Import routes
 import dataRoutes from './routes/dataRoutes.js';
@@ -16,6 +17,9 @@ dotenv.config();
 
 // Connect to MongoDB
 connectDB();
+
+// Load trained models (if available)
+loadTrainedModels();
 
 // Initialize Express app
 const app = express();

@@ -1,9 +1,26 @@
 import natural from 'natural';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import StructuredContent from '../models/StructuredContent.js';
 import ScrapedData from '../models/ScrapedData.js';
 import ClassifiedData from '../models/ClassifiedData.js';
 import { detectLanguage, normalizeTextByLanguage } from './languageDetectionService.js';
 import { log } from '../utils/logger.js';
+
+// __dirname için ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Model dosya yolları
+const MODELS_DIR = path.join(__dirname, '../../models_cache');
+const TURKISH_MODEL_PATH = path.join(MODELS_DIR, 'turkish-classifier.json');
+const ENGLISH_MODEL_PATH = path.join(MODELS_DIR, 'english-classifier.json');
+
+// Models dizinini oluştur (yoksa)
+if (!fs.existsSync(MODELS_DIR)) {
+  fs.mkdirSync(MODELS_DIR, { recursive: true });
+}
 
 // Türkçe ve İngilizce için ayrı classifier'lar
 let turkishClassifier = null;
@@ -130,6 +147,70 @@ const ruleBasedClassification = (scrapedData, structuredContent) => {
   }
   
   return null;
+};
+
+/**
+ * Modeli dosyaya kaydet (Promise wrapper)
+ */
+const saveModel = (classifier, modelPath, language) => {
+  return new Promise((resolve, reject) => {
+    if (!classifier) {
+      log.warn(`${language} classifier kaydedilemedi: classifier null`);
+      resolve(false);
+      return;
+    }
+    
+    classifier.save(modelPath, (err) => {
+      if (err) {
+        log.error(`${language} model kaydetme hatası: ${err.message}`);
+        reject(err);
+        return;
+      }
+      log.info(`${language} model dosyaya kaydedildi: ${modelPath}`);
+      resolve(true);
+    });
+  });
+};
+
+/**
+ * Modeli dosyadan yükle (Promise wrapper)
+ */
+const loadModel = (modelPath, language) => {
+  return new Promise((resolve) => {
+    if (!fs.existsSync(modelPath)) {
+      log.info(`${language} model dosyası bulunamadı: ${modelPath}`);
+      resolve(null);
+      return;
+    }
+    
+    natural.BayesClassifier.load(modelPath, null, (err, classifier) => {
+      if (err) {
+        log.error(`${language} model yükleme hatası: ${err.message}`);
+        resolve(null);
+        return;
+      }
+      log.info(`${language} model dosyadan yüklendi: ${modelPath}`);
+      resolve(classifier);
+    });
+  });
+};
+
+/**
+ * Modelleri yükle (başlangıçta)
+ */
+export const loadTrainedModels = async () => {
+  try {
+    turkishClassifier = await loadModel(TURKISH_MODEL_PATH, 'Türkçe');
+    englishClassifier = await loadModel(ENGLISH_MODEL_PATH, 'İngilizce');
+    
+    if (turkishClassifier || englishClassifier) {
+      log.info('Eğitilmiş modeller yüklendi');
+    } else {
+      log.info('Eğitilmiş model dosyası bulunamadı, yeni eğitim gerekli');
+    }
+  } catch (error) {
+    log.error(`Model yükleme hatası: ${error.message}`);
+  }
 };
 
 /**
@@ -316,6 +397,12 @@ export const trainModels = async () => {
       if (trainingSampleCount > 0) {
         turkishClassifier.train();
         log.info(`Türkçe model eğitildi: ${trainingSampleCount} eğitim örneği (${turkishData.length} toplam veri)`);
+        // Modeli dosyaya kaydet
+        try {
+          await saveModel(turkishClassifier, TURKISH_MODEL_PATH, 'Türkçe');
+        } catch (saveError) {
+          log.error(`Türkçe model kaydetme hatası: ${saveError.message}`);
+        }
       } else {
         log.warn(`Türkçe model eğitilemedi: Yeterli etiketli örnek bulunamadı (${turkishData.length} veri incelendi)`);
         turkishClassifier = null;
@@ -350,6 +437,12 @@ export const trainModels = async () => {
       if (trainingSampleCount > 0) {
         englishClassifier.train();
         log.info(`İngilizce model eğitildi: ${trainingSampleCount} eğitim örneği (${englishData.length} toplam veri)`);
+        // Modeli dosyaya kaydet
+        try {
+          await saveModel(englishClassifier, ENGLISH_MODEL_PATH, 'İngilizce');
+        } catch (saveError) {
+          log.error(`İngilizce model kaydetme hatası: ${saveError.message}`);
+        }
       } else {
         log.warn(`İngilizce model eğitilemedi: Yeterli etiketli örnek bulunamadı (${englishData.length} veri incelendi)`);
         englishClassifier = null;
